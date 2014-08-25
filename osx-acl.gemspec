@@ -1,11 +1,11 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'osx/acl/version'
+require 'acl/version'
 
 Gem::Specification.new do |spec|
   spec.name          = "osx-acl"
-  spec.version       = Osx::Acl::VERSION
+  spec.version       = OSX::ACL::VERSION
   spec.authors       = ["Kyle Crawford"]
   spec.email         = ["kcrwfrd@gmail.com"]
   spec.summary       = %q{OS X ACL reading and manipulation}

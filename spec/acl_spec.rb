@@ -1,8 +1,8 @@
 require 'spec_helper'
 
-describe Osx::Acl do
+describe OSX::ACL do
   it 'has a version number' do
-    expect(Osx::Acl::VERSION).not_to be nil
+    expect(OSX::ACL::VERSION).not_to be nil
   end
 
   it 'does something useful' do
