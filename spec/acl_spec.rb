@@ -40,7 +40,12 @@ describe ACL do
       make_dir_with_two_aces
       entries = ACL.of("spec/fixtures/dir_with_two_aces").entries
       expect(entries.length).to eq(2)
-      expect(entries.first).to be_kind_of(ACL_Entry)
+      expect(entries.first).to be_kind_of(ACL::Entry)
     end
+  end
+
+  describe "#remove_orphans!" do
+    it "returns true if any orphans were removed"
+    it "does nothing if environment variable is set to NOOP"
   end
 end

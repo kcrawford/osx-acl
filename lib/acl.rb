@@ -1,4 +1,5 @@
 require "acl/version"
+require "acl/entry"
 
 module OSX
 
@@ -11,7 +12,7 @@ module OSX
     end
 
     def entries
-      entry_lines.map {|line| ACL_Entry.from_text(line) }
+      entry_lines.map {|line| ACL::Entry.from_text(line) }
     end
 
     def entry_lines
@@ -28,22 +29,13 @@ module OSX
     end
 
     def api
-      ACL_API
-    end
-
-  end
-
-  class ACL_Entry
-    attr_accessor :line
-
-    def self.from_text(line)
-      new.tap {|entry| entry.line = line }
+      ACL::API
     end
 
   end
 
   require 'ffi'
-  module ACL_API
+  module API
     extend FFI::Library
     ffi_lib FFI::Library::LIBC
     attach_function :acl_get_fd, [:int], :pointer
