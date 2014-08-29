@@ -3,6 +3,16 @@ require "acl/entry"
 
 module OSX
 
+  require 'ffi'
+  module API
+    extend FFI::Library
+    ffi_lib FFI::Library::LIBC
+    attach_function :acl_get_fd, [:int], :pointer
+    attach_function :acl_to_text, [:pointer, :pointer], :pointer
+    attach_function :acl_valid, [:pointer], :int
+    attach_function :acl_free, [:pointer], :int
+  end
+
   class ACL
 
     attr_accessor :path
@@ -28,19 +38,42 @@ module OSX
       file_descriptor.close
     end
 
+    def remove_orphans!
+      removal_count = 0
+      current_entries = entries
+      current_entries.reverse.each_with_index do |entry,index|
+        # since entries are reversed, we calculate the actual index
+        actual_index = (current_entries.length - 1) - index
+        if entry.orphaned?
+          puts "removing #{entry} from #{path} at index #{actual_index}"
+          if remove_entry_at_index(actual_index)
+            removal_count += 1
+          else
+            raise "Failed to remove #{entry} from #{path}"
+          end
+        end
+      end
+      removal_count
+    end
+
+    def orphans
+      entries.select {|e| e.orphaned? }
+    end
+
+    def remove_entry_at_index(index)
+      args = ["chmod", "-a#", index.to_s, path]
+      puts args.join(" ")
+      if ENV['OSX_ACL_NOOP'] == "yes"
+        true
+      else
+        system(*args)
+      end
+    end
+
     def api
-      ACL::API
+      API
     end
 
   end
 
-  require 'ffi'
-  module API
-    extend FFI::Library
-    ffi_lib FFI::Library::LIBC
-    attach_function :acl_get_fd, [:int], :pointer
-    attach_function :acl_to_text, [:pointer, :pointer], :pointer
-    attach_function :acl_valid, [:pointer], :int
-    attach_function :acl_free, [:pointer], :int
-  end
 end

@@ -8,6 +8,10 @@ module OSX
         new.tap {|entry| entry.text = text }
       end
 
+      def to_s
+        text
+      end
+
       def orphaned?
         assignment.orphan?
       end

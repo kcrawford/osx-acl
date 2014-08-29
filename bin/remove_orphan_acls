@@ -1,9 +1,10 @@
 #!/usr/bin/env ruby
 
 require 'optparse'
+require 'acl'
 
 def process(entry)
-  puts File.absolute_path(entry) if OSX::ACL.from(entry).remove_orphans!
+  puts File.absolute_path(entry) if OSX::ACL.of(entry).remove_orphans! > 0
   if File.directory?(entry)
     Dir.entries(entry).each do |sub_entry|
       next if [".",".."].include?(sub_entry)
