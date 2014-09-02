@@ -3,6 +3,7 @@ require 'spec_helper'
 include OSX
 DIR_WITH_VALID_ACES = 'tmp/dir_with_two_aces'
 DIR_WITH_ORPHAN_ACES = 'tmp/dir_with_orphan_aces'
+LOCKED_DIR_WITH_ORPHANS = '/tmp/locked_dir_with_orphans'
 
 def make_dir_with_two_aces
   puts "creating dir with two aces..."
@@ -12,6 +13,19 @@ def make_dir_with_two_aces
       mkdir -p 'tmp/dir_with_two_aces';
       chmod +a 'group:staff allow read' 'tmp/dir_with_two_aces';
       chmod +a 'group:_www allow read' 'tmp/dir_with_two_aces';
+    "
+  )
+end
+
+def make_locked_dir_with_orphans
+  create_acl_with_orphans
+  puts "creating locked dir with orphans..."
+  system(
+    "
+      chflags -R 0 '#{LOCKED_DIR_WITH_ORPHANS}';
+      rm -Rf '#{LOCKED_DIR_WITH_ORPHANS}';
+      mv '#{DIR_WITH_ORPHAN_ACES}' '#{LOCKED_DIR_WITH_ORPHANS}';
+      chflags uchg '#{LOCKED_DIR_WITH_ORPHANS}';
     "
   )
 end
@@ -98,6 +112,14 @@ describe ACL do
       acl_with_orphans = ACL.of(DIR_WITH_ORPHAN_ACES)
       acl_with_orphans.remove_orphans!
       expect(acl_with_orphans.remove_orphans!).to eq(2)
+      ENV['OSX_ACL_NOOP'] = nil
+    end
+    it "handles locked files" do
+      make_locked_dir_with_orphans
+      expect(`stat -f %f #{LOCKED_DIR_WITH_ORPHANS}`.chomp).to eq("2")
+      acl = ACL.of(LOCKED_DIR_WITH_ORPHANS)
+      expect(acl.remove_orphans!).to eq(2)
+      expect(`stat -f %f #{LOCKED_DIR_WITH_ORPHANS}`.chomp).to eq("2")
     end
   end
 end

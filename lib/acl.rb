@@ -1,5 +1,6 @@
 require "acl/version"
 require "acl/entry"
+require 'open3'
 
 module OSX
 
@@ -65,13 +66,37 @@ module OSX
       entries.select {|e| e.orphaned? }
     end
 
+    def file_flags
+      flags = ""
+      Open3.popen3("stat", "-f", "%f", path) do |stdin,stdout,stderr,thread|
+        flags = stdout.read
+      end
+      flags.to_i.to_s(8)
+    end
+
+    def preserving_flags
+      original_file_flags = file_flags
+      if original_file_flags == "0"
+        yield
+      else
+        begin
+          system("chflags", "0", path)
+          yield
+        ensure
+          system("chflags", original_file_flags, path)
+        end
+      end
+    end
+
     def remove_entry_at_index(index)
       args = ["chmod", "-a#", index.to_s, path]
       puts args.join(" ")
       if ENV['OSX_ACL_NOOP'] == "yes"
         true
       else
-        system(*args)
+        preserving_flags do
+          system(*args)
+        end
       end
     end
 
