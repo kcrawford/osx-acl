@@ -1,17 +1,17 @@
 require 'spec_helper'
 
 include OSX
-DIR_WITH_VALID_ACES = 'spec/fixtures/dir_with_two_aces'
-DIR_WITH_ORPHAN_ACES = 'spec/fixtures/dir_with_orphan_aces'
+DIR_WITH_VALID_ACES = 'tmp/dir_with_two_aces'
+DIR_WITH_ORPHAN_ACES = 'tmp/dir_with_orphan_aces'
 
 def make_dir_with_two_aces
   puts "creating dir with two aces..."
   system(
     "
-      rm -Rf 'spec/fixtures/dir_with_two_aces';
-      mkdir -p 'spec/fixtures/dir_with_two_aces';
-      chmod +a 'group:staff allow read' 'spec/fixtures/dir_with_two_aces';
-      chmod +a 'group:_www allow read' 'spec/fixtures/dir_with_two_aces';
+      rm -Rf 'tmp/dir_with_two_aces';
+      mkdir -p 'tmp/dir_with_two_aces';
+      chmod +a 'group:staff allow read' 'tmp/dir_with_two_aces';
+      chmod +a 'group:_www allow read' 'tmp/dir_with_two_aces';
     "
   )
 end
@@ -22,15 +22,15 @@ def create_acl_with_orphans
   system(
     "
       rm -Rf '#{DIR_WITH_ORPHAN_ACES}';
-      mv 'spec/fixtures/dir_with_two_aces' 'spec/fixtures/dir_with_orphan_aces';
+      mv 'tmp/dir_with_two_aces' 'tmp/dir_with_orphan_aces';
       sudo dscl . -create /Users/_acl_orphan_user;
       sudo dscl . -create /Users/_acl_orphan_user PrimaryGroupID 20;
       sudo dscl . -create /Users/_acl_orphan_user UserShell /bin/false;
       sudo dscl . -create /Users/_acl_orphan_user NFSHomeDirectory /dev/null;
       sudo dscl . -create /Users/_acl_orphan_user RealName acl_orphan_user;
       sudo dscl . -create /Users/_acl_orphan_user UniqueID 1020;
-      chmod +a 'user:_acl_orphan_user allow read' 'spec/fixtures/dir_with_orphan_aces';
-      chmod +a# 3 'user:_acl_orphan_user deny write' 'spec/fixtures/dir_with_orphan_aces';
+      chmod +a 'user:_acl_orphan_user allow read' 'tmp/dir_with_orphan_aces';
+      chmod +a# 3 'user:_acl_orphan_user deny write' 'tmp/dir_with_orphan_aces';
       sudo dscl . -delete /Users/_acl_orphan_user;
     "
   )
@@ -49,9 +49,9 @@ describe ACL do
   it "can read lines of acl entries" do
     expect(ACL.of("/").entry_lines).to be_kind_of(Array)
     make_dir_with_two_aces
-    expect(ACL.of("spec/fixtures/dir_with_two_aces").entry_lines.length).to eq(2)
-    expect(ACL.of("spec/fixtures/dir_with_two_aces").entry_lines.first).to eq("group:ABCDEFAB-CDEF-ABCD-EFAB-CDEF00000046:_www:70:allow:read")
-    expect(ACL.of("spec/fixtures/dir_with_two_aces").entry_lines.last).to eq("group:ABCDEFAB-CDEF-ABCD-EFAB-CDEF00000014:staff:20:allow:read")
+    expect(ACL.of("tmp/dir_with_two_aces").entry_lines.length).to eq(2)
+    expect(ACL.of("tmp/dir_with_two_aces").entry_lines.first).to eq("group:ABCDEFAB-CDEF-ABCD-EFAB-CDEF00000046:_www:70:allow:read")
+    expect(ACL.of("tmp/dir_with_two_aces").entry_lines.last).to eq("group:ABCDEFAB-CDEF-ABCD-EFAB-CDEF00000014:staff:20:allow:read")
   end
 
   describe "its entries" do
@@ -61,15 +61,15 @@ describe ACL do
 
     it 'returns entry instances' do
       make_dir_with_two_aces
-      entries = ACL.of("spec/fixtures/dir_with_two_aces").entries
+      entries = ACL.of("tmp/dir_with_two_aces").entries
       expect(entries.length).to eq(2)
       expect(entries.first).to be_kind_of(ACL::Entry)
     end
 
     it "handles symlinks" do
       # create a symlink that points nowhere so File.open fails
-      system("ln", "-sf", "/tmp/.would_not_exist_ever_ever", "spec/fixtures/symlink")
-      expect(ACL.of("spec/fixtures/symlink").entries.length).to eq(0)
+      system("ln", "-sf", "/tmp/.would_not_exist_ever_ever", "tmp/symlink")
+      expect(ACL.of("tmp/symlink").entries.length).to eq(0)
     end
   end
 
