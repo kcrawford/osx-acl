@@ -65,6 +65,12 @@ describe ACL do
       expect(entries.length).to eq(2)
       expect(entries.first).to be_kind_of(ACL::Entry)
     end
+
+    it "handles symlinks" do
+      # create a symlink that points nowhere so File.open fails
+      system("ln", "-sf", "/tmp/.would_not_exist_ever_ever", "spec/fixtures/symlink")
+      expect(ACL.of("spec/fixtures/symlink").entries.length).to eq(0)
+    end
   end
 
   describe "#remove_orphans!" do

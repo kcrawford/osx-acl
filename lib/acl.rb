@@ -26,7 +26,12 @@ module OSX
     end
 
     def entry_lines
-      file_descriptor = File.open(path, "r")
+      begin
+        file_descriptor = File.open(path, "r")
+      rescue Errno::ENOENT
+        file_descriptor = false
+        return []
+      end
       acl_ptr = api.acl_get_fd(file_descriptor.fileno)
       acl_text_ptr = api.acl_to_text(acl_ptr, nil)
       return [] if acl_text_ptr.null?
@@ -35,7 +40,7 @@ module OSX
     ensure
       api.acl_free(acl_text_ptr)
       api.acl_free(acl_ptr)
-      file_descriptor.close
+      file_descriptor.close if file_descriptor
     end
 
     def remove_orphans!
