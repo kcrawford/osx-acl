@@ -65,10 +65,16 @@ def main
       end
     end
   when "report"
+    previous_acl_entries = []
     process_recursive(ARGV[0]) do |entry|
       acl = OSX::ACL.of(entry)
       entries = acl.entries
-      puts "#{acl.orphans.length}/#{entries.length}: #{File.absolute_path(entry)}"
+      previous_acl_entries = entries
+      system("ls", "-led", entry) if (previous_acl_entries != entries.as_inherited) || entries.any? {|e| !e.inherited? }
+      #puts "#{acl.orphans.length}/#{entries.length}: #{File.absolute_path(entry)}"
+      # I want to print every ACL that is different than it's parent ACL
+      # I want to print every ACL entry that is not inherited
+      # Can just be ls -led path
     end
   else
     puts opt_parser

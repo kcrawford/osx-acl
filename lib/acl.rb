@@ -1,6 +1,7 @@
 require "acl/version"
 require "acl/entry"
 require 'open3'
+require 'delegate'
 
 module OSX
 
@@ -23,7 +24,13 @@ module OSX
     end
 
     def entries
-      entry_lines.map {|line| ACL::Entry.from_text(line) }
+      Entries.new(entry_lines.map {|line| ACL::Entry.from_text(line) })
+    end
+
+    class Entries < SimpleDelegator
+      def as_inherited
+        map {|entry| entry.inherited = true }
+      end
     end
 
     def entry_lines
