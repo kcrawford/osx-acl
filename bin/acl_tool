@@ -1,0 +1,81 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'acl'
+
+def process_recursive(entry, &block)
+  yield(entry)
+  process_directory(entry) {|next_entry| process_recursive(next_entry,&block) } if File.directory?(entry)
+end
+
+def process_directory(entry)
+  Dir.entries(entry).each do |sub_entry|
+    next if [".",".."].include?(sub_entry)
+    yield(File.join(entry, sub_entry))
+  end
+end
+
+def main
+  options = {}
+
+  opt_parser = OptionParser.new do |opt|
+    opt.banner = "Usage: #{$0} [OPTIONS] path"
+
+    opt.separator ""
+    opt.separator "Options"
+
+    opt.on("--dry-run", "outputs what would be done without modifying ACLs") do
+      ENV['OSX_ACL_NOOP'] = "yes"
+    end
+
+    opt.on("--remove-orphans", "removes orphaned acl entries") do
+      options[:action] = "remove_orphans"
+    end
+
+    opt.on("--report", "report existing ACLs") do
+      options[:action] = "report"
+    end
+
+    opt.on("--version", "outputs version information for this tool") do 
+      options[:action] = "version"
+    end
+
+    opt.on("--help", "outputs help information for this tool") do 
+      options[:action] = "help"
+    end
+
+  end
+
+  opt_parser.parse!
+
+  if ARGV[0] && !File.exist?(ARGV[0])
+    puts opt_parser
+    exit 0
+  end
+  case options[:action]
+  when "version"
+    puts OSX::ACL::VERSION
+  when "help"
+    puts opt_parser
+  when "remove_orphans"
+    process_recursive(ARGV[0]) do |entry|
+      number_of_aces_removed = OSX::ACL.of(entry).remove_orphans!
+      if number_of_aces_removed > 0
+        puts "-#{number_of_aces_removed}: #{File.absolute_path(entry)}"
+      end
+    end
+  when "report"
+    process_recursive(ARGV[0]) do |entry|
+      acl = OSX::ACL.of(entry)
+      entries = acl.entries
+      puts "#{acl.orphans.length}/#{entries.length}: #{File.absolute_path(entry)}"
+    end
+  else
+    puts opt_parser
+  end
+end
+
+if __FILE__ == $0
+  main
+end
+
