@@ -34,16 +34,13 @@ module OSX
     end
 
     def entry_lines
-      acl_text_ptr, acl_ptr = nil
+      file_descriptor, acl_text_ptr, acl_ptr = nil
       begin
         file_descriptor = File.open(path, "r")
-      rescue
-        if !File.readable?(path)
-          file_descriptor = false
-          return []
-        else
-          raise
-        end
+      rescue Errno::EOPNOTSUPP
+        return []
+      rescue Errno::ENOENT
+        return []
       end
       acl_ptr = api.acl_get_fd(file_descriptor.fileno)
       acl_text_ptr = api.acl_to_text(acl_ptr, nil)
