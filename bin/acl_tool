@@ -71,6 +71,9 @@ def main
       entries = acl.entries
       previous_acl_entries = entries
       system("ls", "-led", entry) if (previous_acl_entries != entries.as_inherited) || entries.any? {|e| !e.inherited? }
+      puts ""
+      # when we compare entries, we need to account for the difference between a directory and a file
+      # when comparing entries, equivalent file and directory permissions should compare as equal
       #puts "#{acl.orphans.length}/#{entries.length}: #{File.absolute_path(entry)}"
       # I want to print every ACL that is different than it's parent ACL
       # I want to print every ACL entry that is not inherited

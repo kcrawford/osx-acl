@@ -9,13 +9,13 @@ module OSX
       end
 
       def to_s
-        text
+        components.join(":")
       end
 
       def inherited=(should_inherit)
         if should_inherit && !inherited?
           rules << "inherited"
-        elsif inherited? &! should_inherit
+        elsif inherited? && !should_inherit
           rules.delete("inherited")
         end
       end
@@ -41,7 +41,7 @@ module OSX
       end
 
       def rules
-        components[-2]
+        components[-2].split(",")
       end
     end
   end

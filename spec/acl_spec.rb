@@ -61,7 +61,7 @@ describe ACL do
   end
 
   it "can read lines of acl entries" do
-    expect(ACL.of("/").entry_lines).to be_kind_of(Array)
+    expect(ACL.of("/").entry_lines).to respond_to(:each)
     make_dir_with_two_aces
     expect(ACL.of("tmp/dir_with_two_aces").entry_lines.length).to eq(2)
     expect(ACL.of("tmp/dir_with_two_aces").entry_lines.first).to eq("group:ABCDEFAB-CDEF-ABCD-EFAB-CDEF00000046:_www:70:allow:read")
@@ -70,7 +70,7 @@ describe ACL do
 
   describe "its entries" do
     it 'is an array' do
-      expect(ACL.of("/").entries).to be_kind_of(Array)
+      expect(ACL.of("/").entries).to respond_to(:each)
     end
 
     it 'returns entry instances' do

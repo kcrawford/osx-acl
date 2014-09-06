@@ -4,13 +4,13 @@ include OSX
 require 'acl/entry'
 
 def valid_acl
-  ACL::Entry.from_text("group:ABCDEFAB-CDEF-ABCD-EFAB-CDEF00000046:_www:70:allow:read,write")
+  ACL::Entry.from_text("group:ABCDEFAB-CDEF-ABCD-EFAB-CDEF00000046:_www:70:allow,inherited:read,write")
 end
 
 describe ACL::Entry do
   describe '.from_text' do
     it "instantiates with text" do
-      expect(ACL::Entry.from_text("doh").text).to eq("doh")
+      expect(ACL::Entry.from_text("doh")).to be_kind_of(ACL::Entry)
     end
   end
 
@@ -18,8 +18,8 @@ describe ACL::Entry do
     expect(valid_acl).to respond_to(:assignment)
   end
 
-  it "has a rule" do
-    expect(valid_acl.rule).to eq("allow")
+  it "has rules" do
+    expect(valid_acl.rules).to eq(["allow", "inherited"])
   end
 
   it "has permissions" do
