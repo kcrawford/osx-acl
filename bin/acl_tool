@@ -2,6 +2,7 @@
 
 require 'optparse'
 require 'acl'
+require 'set'
 
 def process_recursive(entry, &block)
   yield(entry)
@@ -65,20 +66,57 @@ def main
       end
     end
   when "report"
-    previous_acl_entries = []
-    process_recursive(ARGV[0]) do |entry|
-      acl = OSX::ACL.of(entry)
+    path_count = 0
+    ace_count = 0
+    orphan_count = 0
+    explicit_paths = Set.new
+    user_acl_paths = Set.new
+    no_acl_paths = Set.new
+    process_recursive(ARGV[0]) do |path|
+      path_count += 1
+      acl = OSX::ACL.of(path)
       entries = acl.entries
-      previous_acl_entries = entries
-      system("ls", "-led", entry) if (previous_acl_entries != entries.as_inherited) || entries.any? {|e| !e.inherited? }
-      puts ""
-      # when we compare entries, we need to account for the difference between a directory and a file
-      # when comparing entries, equivalent file and directory permissions should compare as equal
-      #puts "#{acl.orphans.length}/#{entries.length}: #{File.absolute_path(entry)}"
-      # I want to print every ACL that is different than it's parent ACL
-      # I want to print every ACL entry that is not inherited
-      # Can just be ls -led path
+      ace_count += entries.length
+      orphan_count += acl.orphans.length
+      if acl.entries.empty?
+        no_acl_paths << path
+      else
+        entries.each do |entry|
+          if entry.assignment.type == 'user'
+            user_acl_paths << path
+          end
+          if !entry.inherited?
+            explicit_paths << path
+          end
+        end
+      end
+
     end
+    # It should output stats:
+    #   total files
+    #   total aces
+    #   total orphans
+    #   total explicit
+    #   total without acl
+    #   list of explicit
+    #   list of paths without an acl
+
+    output = %{
+Total paths: #{path_count}
+Total aces: #{ace_count}
+Total orphans: #{orphan_count}
+Total explicit: #{explicit_paths.length}
+Total without acl: #{no_acl_paths.length}
+Total with user level: #{user_acl_paths.length}
+List of explicit:
+#{explicit_paths.to_a.join("\n")}
+List of paths without an acl:
+#{no_acl_paths.to_a.join("\n")}
+List of user aces:
+#{user_acl_paths.to_a.join("\n")}
+}
+    puts output
+
   else
     puts opt_parser
   end
