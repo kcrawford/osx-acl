@@ -33,6 +33,10 @@ def main
       options[:action] = "remove_orphans"
     end
 
+    opt.on("--remove-user-entries", "removes user acl entries") do
+      options[:action] = "remove_user_entries"
+    end
+
     opt.on("--report", "report existing ACLs") do
       options[:action] = "report"
     end
@@ -64,6 +68,10 @@ def main
       if number_of_aces_removed > 0
         puts "-#{number_of_aces_removed}: #{File.absolute_path(entry)}"
       end
+    end
+  when "remove_user_entries"
+    process_recursive(ARGV[0]) do |entry|
+      OSX::ACL.of(entry).entries.remove_if {|e| e.assignment.type == "user" }
     end
   when "report"
     path_count = 0

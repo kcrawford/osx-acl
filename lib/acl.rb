@@ -2,6 +2,7 @@ require "acl/version"
 require "acl/entry"
 require 'open3'
 require 'delegate'
+require 'shellwords'
 
 module OSX
 
@@ -17,19 +18,45 @@ module OSX
 
   class ACL
 
-    attr_accessor :path
+    attr_accessor :path, :entries
 
     def self.of(path)
       new.tap {|acl| acl.path = path }
     end
 
     def entries
-      Entries.new(entry_lines.map {|line| ACL::Entry.from_text(line) })
+      @entries ||= make_entries
+    end
+
+    def make_entries
+      Entries.new(self, entry_lines.map {|line| ACL::Entry.from_text(line) })
     end
 
     class Entries < SimpleDelegator
+      attr_reader :acl
+      def initialize(acl, entries)
+        @acl = acl
+        super(entries)
+      end
       def as_inherited
         map {|entry| entry.inherited = true }
+      end
+
+      def remove_if
+        removal_count = 0
+        # we reverse the order of the entries so we can remove entries without affecting the index of other entries
+        reverse.each_with_index do |entry,index|
+          if yield(entry)
+            # since entries are reversed, we calculate the actual index
+            actual_index = (length - 1) - index
+            if acl.remove_entry_at_index(actual_index)
+              removal_count += 1
+            else
+              raise "Failed to remove #{entry} from #{path}"
+            end
+          end
+        end
+        removal_count
       end
     end
 
@@ -54,21 +81,7 @@ module OSX
     end
 
     def remove_orphans!
-      removal_count = 0
-      current_entries = entries
-      current_entries.reverse.each_with_index do |entry,index|
-        # since entries are reversed, we calculate the actual index
-        actual_index = (current_entries.length - 1) - index
-        if entry.orphaned?
-          puts "removing #{entry} from #{path} at index #{actual_index}"
-          if remove_entry_at_index(actual_index)
-            removal_count += 1
-          else
-            raise "Failed to remove #{entry} from #{path}"
-          end
-        end
-      end
-      removal_count
+      entries.remove_if {|entry| entry.orphaned? }
     end
 
     def orphans
@@ -83,6 +96,10 @@ module OSX
       flags.to_i.to_s(8)
     end
 
+    # Wraps a file action
+    #   first removes file flags that would cause the action to fail
+    #   then yields to the block to perform the action
+    #   then restores the flags
     def preserving_flags
       original_file_flags = file_flags
       if original_file_flags == "0"
@@ -99,7 +116,7 @@ module OSX
 
     def remove_entry_at_index(index)
       args = ["chmod", "-a#", index.to_s, path]
-      puts args.join(" ")
+      puts "#{args[0]} #{args[1]} #{args[2]} #{Shellwords.escape(args[3])}"
       if ENV['OSX_ACL_NOOP'] == "yes"
         true
       else

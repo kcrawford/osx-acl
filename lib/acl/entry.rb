@@ -2,10 +2,15 @@ require 'acl/assignment'
 module OSX
   class ACL
     class Entry
+      include Comparable
       attr_accessor :components
 
       def self.from_text(text)
         new.tap {|entry| entry.components = text.split(":") }
+      end
+
+      def <=>(other)
+        components <=> other.components
       end
 
       def to_s
