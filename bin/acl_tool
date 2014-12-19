@@ -130,7 +130,3 @@ List of user aces:
   end
 end
 
-if __FILE__ == $0
-  main
-end
-
