@@ -116,7 +116,7 @@ module OSX
 
     def remove_entry_at_index(index)
       args = ["chmod", "-a#", index.to_s, path]
-      puts "#{args[0]} #{args[1]} #{args[2]} #{Shellwords.escape(args[3])}"
+      puts "#{args[0]} #{args[1]} #{args[2]} #{Shellwords.escape(args[3])} # #{entries[index].to_s}"
       if ENV['OSX_ACL_NOOP'] == "yes"
         true
       else
