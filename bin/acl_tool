@@ -17,7 +17,7 @@ def process_directory(entry)
 end
 
 def main
-  options = {}
+  options = {:exclude => []}
 
   opt_parser = OptionParser.new do |opt|
     opt.banner = "Usage: #{$0} [OPTIONS] path"
@@ -27,6 +27,10 @@ def main
 
     opt.on("--dry-run", "outputs what would be done without modifying ACLs") do
       ENV['OSX_ACL_NOOP'] = "yes"
+    end
+
+    opt.on("--exclude x,y,z", Array, "users to exclude from --remove-user-entries") do |exclusions|
+      options[:exclude] = exclusions.map(&:downcase)
     end
 
     opt.on("--remove-orphans", "removes orphaned acl entries") do
@@ -71,7 +75,10 @@ def main
     end
   when "remove_user_entries"
     process_recursive(ARGV[0]) do |entry|
-      OSX::ACL.of(entry).entries.remove_if {|e| e.assignment.type == "user" }
+      OSX::ACL.of(entry).entries.remove_if do |ace|
+        assignment = ace.assignment
+        assignment.type == "user" && !options[:exclude].include?(assignment.name.downcase)
+      end
     end
   when "report"
     path_count = 0
