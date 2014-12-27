@@ -64,6 +64,8 @@ module OSX
       file_descriptor, acl_text_ptr, acl_ptr = nil
       begin
         file_descriptor = File.open(path, "r")
+      rescue Errno::ELOOP
+        return []
       rescue Errno::EOPNOTSUPP
         return []
       rescue Errno::ENOENT
