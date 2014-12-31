@@ -52,7 +52,7 @@ module OSX
             if acl.remove_entry_at_index(actual_index)
               removal_count += 1
             else
-              raise "Failed to remove #{entry} from #{path}"
+              raise "Failed to remove #{entry} from #{acl.path}"
             end
           end
         end
