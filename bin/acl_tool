@@ -75,9 +75,13 @@ def main
     end
   when "remove_user_entries"
     process_recursive(ARGV[0]) do |entry|
-      OSX::ACL.of(entry).entries.remove_if do |ace|
-        assignment = ace.assignment
-        assignment.type == "user" && !options[:exclude].include?(assignment.name.downcase)
+      begin
+        OSX::ACL.of(entry).entries.remove_if do |ace|
+          assignment = ace.assignment
+          assignment.type == "user" && !options[:exclude].include?(assignment.name.downcase)
+        end
+      rescue
+        $stderr.puts "### Failed to remove ace for #{entry}"
       end
     end
   when "report"
