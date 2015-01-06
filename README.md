@@ -18,6 +18,11 @@ Or install it yourself as:
 
     $ gem install osx-acl
 
+## Building
+
+`fpm -s gem -t osxpkg --osxpkg-identifier-prefix org.rubygems.kcrawford
+pkg/osx-acl-1.0.1.gem`
+
 ## Usage
 
 TODO: Write usage instructions here
