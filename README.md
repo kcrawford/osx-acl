@@ -2,6 +2,8 @@
 
 Tool and Ruby Library for managing ACLs on OS X
 
+The acl_tool can be used to report on and remove orphaned or user-level entries.
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -58,6 +60,10 @@ From ruby
 => "user"
 >> ace.assignment.name
 => "_www"
+>> ace.rules
+=> ["allow"]
+>> ace.permissions
+=> ["read"]
 >> acl.remove_entry_at_index(0)
 chmod -a# 0 tmp # user:FFFFEEEE-DDDD-CCCC-BBBB-AAAA00000046:_www:70:allow:read
 => true
