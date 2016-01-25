@@ -9,7 +9,7 @@ module OSX
   require 'ffi'
   module API
     extend FFI::Library
-    ffi_lib FFI::Library::LIBC
+    ffi_lib("/usr/lib/libc.dylib")
     attach_function :acl_get_fd, [:int], :pointer
     attach_function :acl_to_text, [:pointer, :pointer], :pointer
     attach_function :acl_valid, [:pointer], :int
